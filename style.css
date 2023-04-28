@@ -1,0 +1,248 @@
+/* Global Design Elements */
+
+body {
+    background-image: linear-gradient(rgba(172, 222, 255, 0.993),rgb(255, 255, 255),rgba(172, 222, 255, 0.993));
+    font-family: garamond ;
+    color: rgb(2, 48, 48);
+}
+
+a {
+    text-decoration: none;
+}
+
+
+/* Header Design Elements */
+
+header {    
+    background-image:url(images/img4.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.header_h1 {
+    font-family: garamond bold;
+    font-size: 10vh;
+    background-size: cover;
+    background-repeat: no-repeat;
+    text-shadow: 7px 7px 20px rgba(0, 25, 70, 0.336);
+    letter-spacing: 14px;
+    margin-bottom:0px ;
+    font-style: italic;
+}
+
+
+/* Nav Bar Style */
+
+.navbar-toggler {
+    background-color: rgba(132, 199, 253, 0.473);
+}
+
+
+/* Home page style */
+
+.home_main {
+    margin-left: 5%;
+}
+
+.home_h2 {
+    margin-top:2.5% ;
+    font-size: 5vw;
+}
+    
+.home_h3 {
+    font-size: 3vw;
+}
+
+.home_img {
+    margin-top: 0;
+    width: 25%;
+    display: block;
+    margin-left: auto;
+    margin-right: 2.5%;
+    float: left;
+}
+
+.home_a {
+    color: rgb(250, 158, 38);
+    font-weight: bold;
+    font-size: 3vw;
+    text-decoration: underline 1px;
+    
+}
+
+/* Contact page style */
+
+.contact_img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    top: 0;
+}
+
+.contact_h2 { 
+    font-size: 4vw;
+    text-decoration: underline 1px;
+}
+
+.contact_td {
+    border: 2px solid rgb(0, 0, 0);
+}
+.contact_table {
+    border: 5px solid black;
+    background-color:  rgba(177, 230, 255, 0.815);
+    margin: 3vw;
+    padding: 1vw;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 3vh;
+}
+.contact_ul {
+    margin: 0;
+    padding: 0;
+}
+.contact_li {
+    font-size: 2vw;
+    padding-left: 100px;
+    margin-left: 10px;
+}
+
+/* Project page style */
+
+.project_main {
+    text-align: center;
+}
+.photo {
+  text-align: center;
+  width: 550px;
+  display: inline-block;
+  box-sizing: border-box;
+  padding: 10px;
+  margin: 50px;
+  border: 1px solid rgba(0, 0, 0, 0.527);
+  box-shadow: 0 0px 10px rgba(169, 169, 169, 0.308);
+}
+
+.photo img {
+  width: 90%;
+  height: 400px;
+  margin-top: 20px;
+}
+
+.container {
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.wedding_img {
+    width: 1000px;
+    height: inherit;
+}
+
+/* About page style */
+
+
+.about_blockquote {
+    font-size: 20px;
+    border: 2px solid black;
+    border-radius: 5px;
+    letter-spacing: 3px;
+    line-height: 28px;
+    padding: 10px;
+}
+
+.container2 {
+    display: grid ;
+    grid-gap: 20px ;
+    grid-template-columns: 300px auto;
+    grid-template-rows: auto auto;
+    padding: 50px;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  div {
+    text-align: left;
+    font-size: 20px;
+  }
+  
+  .about_img {
+    width: 300px;
+  }
+
+
+/* Mobile settings */
+
+@media only screen and (max-width:575px){
+
+    /* mobile home design elements */
+    .header_h1 {
+        font-size: 165%;
+        font-weight: bold;
+        text-align: left;
+        float: left;
+    }
+    .home_img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 90%;
+    }
+    
+    .home_h2 {
+        font-size: 12vw;
+        text-align: center;
+    }
+        
+    .home_h3 {
+        font-size: 7vw;
+        text-align: center;
+    }
+    
+    .home_a {
+        color: rgb(250, 158, 38);
+        font-weight: bold;
+        font-size: 8vw;
+        text-decoration: none
+        
+    }
+
+    /* mobile contact design elements */
+
+    .contact_img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+        top: 0;
+    }
+    
+    .contact_h2 { 
+        font-size: 14vw;
+        text-decoration: underline 1px;
+    }
+    
+    .contact_td {
+        border: 2vh solid rgb(0, 0, 0);
+    }
+    .contact_table {
+        border: 2px solid black;
+        background-color:  rgba(177, 230, 255, 0.815);
+        margin-right: auto;
+        margin-bottom: 1vh;
+        padding: 4vw;
+        text-align: left;
+        font-size: 3vh;
+    }
+
+    .contact_li {
+        font-size: 6vw;
+        margin-left: -13vw;
+    }
+
+}
