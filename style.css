@@ -21,13 +21,13 @@ header {
 
 .header_h1 {
     font-family: garamond bold;
+    font-style: italic;
+    text-shadow: 7px 7px 20px rgba(0, 25, 70, 0.336);
+    letter-spacing: 14px;
     font-size: 10vh;
     background-size: cover;
     background-repeat: no-repeat;
-    text-shadow: 7px 7px 20px rgba(0, 25, 70, 0.336);
-    letter-spacing: 14px;
     margin-bottom:0px ;
-    font-style: italic;
 }
 
 
@@ -155,10 +155,9 @@ header {
 
 .container2 {
     display: grid ;
-    grid-gap: 20px ;
-    grid-template-columns: 300px auto;
-    grid-template-rows: auto auto;
-    padding: 50px;
+    grid-gap: 4% ;
+    grid-template-columns: 40% 40%;
+    padding: 4vh;
   }
   
   body {
@@ -172,7 +171,7 @@ header {
   }
   
   .about_img {
-    width: 300px;
+    width: 100%;
   }
 
 
@@ -180,9 +179,9 @@ header {
 
 @media only screen and (max-width:575px){
 
-    /* mobile home design elements */
+
     .header_h1 {
-        font-size: 165%;
+        font-size: 10vw;
         font-weight: bold;
         text-align: left;
         float: left;
@@ -193,7 +192,7 @@ header {
         margin-right: auto;
         width: 90%;
     }
-    
+    /* mobile home design elements */    
     .home_h2 {
         font-size: 12vw;
         text-align: center;
@@ -233,7 +232,9 @@ header {
     .contact_table {
         border: 2px solid black;
         background-color:  rgba(177, 230, 255, 0.815);
+        margin-top: 2vh;
         margin-right: auto;
+        margin-left: auto;
         margin-bottom: 1vh;
         padding: 4vw;
         text-align: left;
