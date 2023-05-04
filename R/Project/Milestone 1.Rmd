@@ -1,0 +1,122 @@
+---
+title: "Milestone 1"
+author: "Brian Boughton"
+date: "2023-02-06"
+output: html_document
+---
+
+```{r}
+pacman::p_load(pacman, dplyr, forecast)
+```
+
+# Milestone 1
+
+## Introduction
+The data set used was collected by Hadi fanaee from the laboratory of Artificial Intelligence and Decision Support at the University of Porto in Portugal. The contains information around bike sharing. It consist of an entry number, date, year, season, month, day of the week, hour, and whether or not it was a weekend. It also contains information around weather like temperature, wind speed and, forecast. Lastly, it gives the amount of casual and registered bike borrows along the total number.
+
+## Goal
+
+Our goal with this data is to make predictions of future rentals based on day information and predicted forecasts. There are a few unnecessary
+variables in the dataset that have been removed like the instant number and date along with the casual and registered users because we are currently only interested in the overall users.
+
+## Data Wrangling
+
+### Importing data and setting needed categories to factors and removing the uneeded variables.
+```{r}
+pj.dt<-read.csv("hour.csv")
+pj.df<-read.csv("hour.csv")
+pj.df$season<- as.factor(pj.df$season)
+pj.df$yr<- as.factor(pj.df$yr)
+pj.df$mnth<- as.factor(pj.df$mnth)
+pj.df$hr<- as.factor(pj.df$hr)
+pj.df$holiday<- as.factor(pj.df$holiday)
+pj.df$weekday<- as.factor(pj.df$weekday)
+pj.df$workingday<- as.factor(pj.df$workingday)
+pj.df$weathersit<- as.factor(pj.df$weathersit)
+pj<-subset(pj.df, select = -c(instant, dteday,casual,registered))
+```
+
+The final data frame is called simply pj for project and there are other version of the dataset if needed.
+Description of each feature:
+* instant: record index
+* dteday : date
+* season : season (1:spring, 2:summer, 3:fall, 4:winter)
+* yr : year (0: 2011, 1:2012)
+* mnth : month ( 1 to 12)
+* hr : hour (0 to 23)
+* holiday : weather day is holiday or not (extracted from http://dchr.dc.gov/page/holiday-schedule)
+* weekday : day of the week
+* workingday : if day is neither weekend nor holiday is 1, otherwise is 0.
+* weathersit : 
+* - 1: Clear, Few clouds, Partly cloudy, Partly cloudy
+*	- 2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+*	- 3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+*	- 4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+* temp : Normalized temperature in Celsius. The values are divided to 41 (max)
+* atemp: Normalized feeling temperature in Celsius. The values are divided to 50 (max)
+* hum: Normalized humidity. The values are divided to 100 (max)
+* windspeed: Normalized wind speed. The values are divided to 67 (max)
+* casual: count of casual users
+* registered: count of registered users
+* cnt: count of total rental bikes including both casual and registered
+
+
+### Getting to understand the data.
+
+```{r}
+summary(pj)
+#showing number of Entries and features
+dim(pj)
+#displaying the number of missing entries
+sum(is.na(pj))
+#showing numeric data features
+names(select_if(pj, is.numeric))
+#showing categorical data features
+names(select_if(pj, is.factor))
+```
+
+We can see that the data consist of 13 different variables and 17,379 observations. There is not missing data entries found within the data. The numeric features are temp, atemp, hum, windspeed, and cnt. the categorical features are season, yr, mnth, hr, holiday, weekday, workingday, and weathersit.
+
+### Creating a categorical dataset
+
+The dependent variable in this dataset is a numerical value but we will be using logistic models models to predict the dataset so we will convert the cnt feature to 0 or 1 based on whether or not the value is above or below the mean conditioned by the season.
+
+```{r}
+#Making boxplot showing relationship between cnt and season
+with(pj, plot(cnt~season, main="Box Plot of cnt vs. season", ylab = "# of bikes rented", xlab="Seasons"))
+```
+
+In the box plot above we can see that the means between season are quite different so we can condition the mean around those mean values.
+
+```{r}
+#Finding means conditioned by the season
+mean.spring<-mean(pj[pj$season == 1, 'cnt'], na.rm = TRUE)
+mean.summer<-mean(pj[pj$season == 2, 'cnt'], na.rm = TRUE)
+mean.fall<-mean(pj[pj$season == 3, 'cnt'], na.rm = TRUE)
+mean.winter<-mean(pj[pj$season == 4, 'cnt'], na.rm = TRUE)
+
+#replacing 'cnt' entries with either '0' or '1' based on their value relative to the conditioned mean.
+pj$cnt<-ifelse(pj$cnt >= mean.spring & pj$season == '1', 1,
+        ifelse(pj$cnt >= mean.summer & pj$season == '2', 1,
+        ifelse(pj$cnt >= mean.fall   & pj$season == '3', 1,
+        ifelse(pj$cnt >= mean.winter & pj$season == '4', 1,
+        ifelse(pj$cnt  < mean.spring & pj$season == '1', 0,     
+        ifelse(pj$cnt  < mean.summer & pj$season == '2', 0,
+        ifelse(pj$cnt  < mean.fall   & pj$season == '3', 0
+               ,0)))))))
+#Looking at what percentage of the entries for 'cnt' is 1 compared the whole data set.
+sum(pj$cnt)
+length(pj$cnt)
+sum(pj$cnt)/length(pj$cnt)
+```
+
+Now we have successfully converted from numerical values for cnt to categorical values where about 40% of the entries are 1s and the remaining a 0s.
+
+
+## Conclusion
+
+Goal: is to be able to predict whether or not the hourly rental of bikes will be above or below the mean conditioned by the season of the year.
+
+Data Alterations: The data was imputed to alter the numeric numbers in the "cnt" feature to be a categorical value of 0 for below or equal to mean rentals based on season and 1 for above.
+
+Next Step: is to build a logistic model based on the above data.

@@ -1,0 +1,78 @@
+---
+title: "Untitled"
+author: "Brian Boughton"
+date: "2023-04-25"
+output: html_document
+---
+
+# Milestone 5 -Naive Bayes
+
+## Goal
+
+Implement NB model with 80-20 and 60-40 split evaluation. If you implement 4-fold cross-validation analysis, you will get 10-point bonus.
+
+
+* another classification model with training-test split of 80-20 and 60- 40 and results of precision, recall, and f-measure. (Note, if you work as a group, you need to pick another algorithm different from your Milestone 2 with another feature set after the feature selection.)
+
+* A model on 4-fold cross-validation with the results of precision, recall, and f-measure. (Bonus)
+
+* a report to summarize your finding. It may include but not limit to the questions, such as which model performances better in this dataset and which split performs better? Why?
+
+```{r}
+dt<-read.csv("hour.csv")
+dt<-subset(dt, select = -c(instant, dteday,casual,registered,yr))
+
+dt$temp<-ifelse(dt$temp >= mean(dt$temp), 1, 0)
+dt$atemp<-ifelse(dt$atemp >= mean(dt$atemp), 1, 0)
+dt$hum<-ifelse(dt$hum >= mean(dt$hum), 1, 0)
+dt$windspeed<-ifelse(dt$windspeed >= mean(dt$windspeed), 1, 0)
+dt$weathersit<-ifelse(dt$weathersit == 4,3,dt$weathersit)
+dt$cnt<-ifelse(dt$cnt >= mean(dt$cnt), 1, 0)
+dt[,1]<-as.factor(dt[,1])
+dt[,2]<-as.factor(dt[,2])
+dt[,3]<-as.factor(dt[,3])
+dt[,4]<-as.factor(dt[,4])
+dt[,5]<-as.factor(dt[,5])
+dt[,6]<-as.factor(dt[,6])
+dt[,7]<-as.factor(dt[,7])
+dt[,8]<-as.factor(dt[,8])
+dt[,9]<-as.factor(dt[,9])
+dt[,10]<-as.factor(dt[,10])
+dt[,11]<-as.factor(dt[,11])
+dt[,12]<-as.factor(dt[,12])
+
+```
+
+```{r}
+train.index <- sample(c(1:dim(dt)[1]), dim(dt)[1]*0.6)  
+train.df <- dt[train.index, ]
+valid.df <- dt[-train.index, ]
+```
+
+```{r}
+(nb<-naiveBayes(cnt~., data=train.df))
+```
+
+```{r}
+pred.prob <- predict(nb, newdata = valid.df, type = "raw")
+pred.class <- ifelse(pred.prob[,1]>0.5, 1, 0)
+```
+
+```{r}
+library(caret)
+
+# training
+pred.training.prob <- predict(nb, newdata = train.df, type="raw")
+pred.training.class <- ifelse(pred.training.prob[,1]>0.5, 0, 1)
+confusionMatrix(as.factor(pred.training.class),as.factor(train.df$cnt))
+```
+
+```{r}
+# validation
+pred.prob <- predict(nb, newdata = valid.df, type="raw")
+pred.class <- ifelse(pred.prob[,1]>0.5, 0, 1)
+confusionMatrix(as.factor(pred.class), as.factor(valid.df$cnt))
+```
+
+
+

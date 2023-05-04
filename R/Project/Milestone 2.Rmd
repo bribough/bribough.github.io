@@ -1,0 +1,342 @@
+---
+title: "Bike Rental Analysis"
+author: "Brian Boughton"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Milestone 1
+
+The following packages are used for this analysis.
+```{r}
+pacman::p_load(pacman, dplyr, forecast,car,ROSE)
+```
+
+
+
+## Introduction
+The data set used was collected by Hadi fanaee from the laboratory of Artificial Intelligence and Decision Support at the University of Porto in Portugal. The contains information around bike sharing. It consist of an entry number, date, year, season, month, day of the week, hour, and whether or not it was a weekend. It also contains information around weather like temperature, wind speed and, forecast. Lastly, it gives the amount of casual and registered bike borrows along the total number.
+
+## Goal
+
+Our goal with this data is to make predictions of future rentals based on day information and predicted forecasts. There are a few unnecessary
+variables in the dataset that have been removed like the instant number and date along with the casual and registered users because we are currently only interested in the overall users.
+
+## Data Wrangling
+
+### Importing data and setting needed categories to factors and removing the uneeded variables.
+```{r}
+pj.df<-read.csv("hour.csv")
+pj.df$season<- as.factor(pj.df$season)
+pj.df$yr<- as.factor(pj.df$yr)
+pj.df$mnth<- as.factor(pj.df$mnth)
+pj.df$hr<- as.factor(pj.df$hr)
+pj.df$holiday<- as.factor(pj.df$holiday)
+pj.df$weekday<- as.factor(pj.df$weekday)
+pj.df$workingday<- as.factor(pj.df$workingday)
+pj.df$weathersit<- as.factor(pj.df$weathersit)
+pj<-subset(pj.df, select = -c(instant, dteday,casual,registered))
+```
+
+The final data frame is called simply pj for project and there are other version of the dataset if needed.
+Description of each feature:
+
+* instant: record index
+* dteday : date
+
+* season : season (1:spring, 2:summer, 3:fall, 4:winter)
+
+* yr : year (0: 2011, 1:2012)
+
+* mnth : month ( 1 to 12)
+
+* hr : hour (0 to 23)
+
+* holiday : weather day is holiday or not (extracted from
+http://dchr.dc.gov/page/holiday-schedule)
+
+* weekday : day of the week
+
+* workingday : if day is neither weekend nor holiday is 1, otherwise is 0.
+
+* weathersit : 
+
+* - 1: Clear, Few clouds, Partly cloudy, Partly cloudy
+
+*	- 2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+
+*	- 3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+
+*	- 4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+
+* temp : Normalized temperature in Celsius. The values are divided to 41 (max)
+
+* atemp: Normalized feeling temperature in Celsius. The values are divided to 50 (max)
+
+* hum: Normalized humidity. The values are divided to 100 (max)
+
+* windspeed: Normalized wind speed. The values are divided to 67 (max)
+
+* casual: count of casual users
+
+* registered: count of registered users
+
+* cnt: count of total rental bikes including both casual and registered
+
+
+### Getting to understand the data.
+
+```{r}
+summary(pj)
+#showing number of Entries and features
+dim(pj)
+#displaying the number of missing entries
+sum(is.na(pj))
+#showing numeric data features
+names(select_if(pj, is.numeric))
+#showing categorical data features
+names(select_if(pj, is.factor))
+```
+
+We can see that the data consist of 13 different variables and 17,379 observations. There is not missing data entries found within the data. The numeric features are temp, atemp, hum, windspeed, and cnt. the categorical features are season, yr, mnth, hr, holiday, weekday, workingday, and weathersit.
+
+### Creating a categorical dataset
+
+The dependent variable in this dataset is a numerical value but I will be using logistic models models to predict the dataset so I will convert the cnt feature to 0 or 1 based on whether or not the value is above or below the mean conditioned by the season.
+
+```{r}
+#Making boxplot showing relationship between cnt and season
+with(pj, plot(cnt~season, main="Box Plot of cnt vs. season", ylab = "# of bikes rented", xlab="Seasons"))
+```
+
+In the box plot aboveIcan see that the means between season are quite different soIcan condition the mean around those mean values.
+
+```{r}
+#Finding means conditioned by the season
+mean.spring<-mean(pj[pj$season == 1, 'cnt'], na.rm = TRUE)
+mean.summer<-mean(pj[pj$season == 2, 'cnt'], na.rm = TRUE)
+mean.fall<-mean(pj[pj$season == 3, 'cnt'], na.rm = TRUE)
+mean.winter<-mean(pj[pj$season == 4, 'cnt'], na.rm = TRUE)
+
+#replacing 'cnt' entries with either '0' or '1' based on their value relative to the conditioned mean.
+pj$cnt<-ifelse(pj$cnt >= mean.spring & pj$season == '1', 1,
+        ifelse(pj$cnt >= mean.summer & pj$season == '2', 1,
+        ifelse(pj$cnt >= mean.fall   & pj$season == '3', 1,
+        ifelse(pj$cnt >= mean.winter & pj$season == '4', 1,
+        ifelse(pj$cnt  < mean.spring & pj$season == '1', 0,     
+        ifelse(pj$cnt  < mean.summer & pj$season == '2', 0,
+        ifelse(pj$cnt  < mean.fall   & pj$season == '3', 0
+               ,0)))))))
+#Looking at what percentage of the entries for 'cnt' is 1 compared the whole data set.
+sum(pj$cnt)
+length(pj$cnt)
+sum(pj$cnt)/length(pj$cnt)
+```
+
+Now  Ihave successfully converted from numerical values for cnt to categorical values where about 40% of the entries are 1s and the remaining a 0s.
+
+
+## Conclusion
+
+Goal: is to be able to predict whether or not the hourly rental of bikes will be above or below the mean conditioned by the season of the year.
+
+Data Alterations: The data was imputed to alter the numeric numbers in the "cnt" feature to be a categorical value of 0 for below or equal to mean rentals based on season and 1 for above.
+
+Next Step: is to build a logistic model based on the above data.
+
+
+# Milestone 2
+
+## Goal:
+  
+  1. a classification model with training-test split of 60- 40 and results of precision, recall, and f-measure
+  2. a classification model with training-test split of 80- 20 and results of precision, recall, and f-measure
+  3. Bonus, if you report the result of ROC curve and calculate the AUC score. (5%)
+
+## Model development
+
+### Data Seperation
+
+Because the data is ordered,I must use a randomized method to separate the data into training and validation sets.I am using the seed **13** to allow for repeatable results.
+
+```{r}
+set.seed(13)
+#Partitioning data into 60% training and 40% validation data 
+train.index1 <- sample(c(1:dim(pj)[1]), dim(pj)[1]*0.6)  
+train.df1 <- pj[train.index1, ]
+valid.df1 <- pj[-train.index1, ]
+#Partitioning data into 80% training and 20% validation data 
+train.index2 <- sample(c(1:dim(pj)[1]), dim(pj)[1]*0.8)  
+train.df2 <- pj[train.index2, ]
+valid.df2 <- pj[-train.index2, ]
+```
+
+
+```{r}
+#verifying that training data is equal to 60% and that training plus valid is same length as whole data set 
+length(train.df1$cnt)/length(pj$cnt)
+length(train.df1$cnt)+length(valid.df1$cnt) == length(pj$cnt)
+#verifying that training data is equal to 80% and that training plus valid is same length as whole data set 
+length(train.df2$cnt)/length(pj$cnt)
+length(train.df2$cnt)+length(valid.df2$cnt) == length(pj$cnt)
+```
+Now that I have successfully partitioned the data, I can build optimal logit models through the stepwise method.
+```{r}
+#Generating null and full models for both data partitions
+lognull1<-glm(data=valid.df1, cnt~1, family = "binomial")
+logfull1<-glm(data=valid.df1, cnt~., family = "binomial")
+lognull2<-glm(data=valid.df2, cnt~1, family = "binomial")
+logfull2<-glm(data=valid.df2, cnt~., family = "binomial")
+```
+
+```{r}
+#Find optimal model based on 60/40 data partition.
+opt.logit1<-step(
+    logfull1,
+    scope = list(upper = logfull1, lower = lognull1),
+    direction = "both",
+    trace = FALSE, family = binomial
+  )
+summary(opt.logit1)
+#Finding optimal model based on 80/20 data partition.
+opt.logit2<-step(
+    logfull2,
+    scope = list(upper = logfull2, lower = lognull2),
+    direction = "both",
+    trace = FALSE, family = binomial
+  )
+summary(opt.logit2)
+```
+## Evaluation of the models.
+
+### 60/40 partition logit model analysis.
+
+To begin the analysis I will create a confusion matrix that will compare the models predicted values to the actual values based on the training and validation data sets. 
+```{r}
+actual.train1<-train.df1$cnt
+actual.valid1<-valid.df1$cnt
+pred.train1<-predict(opt.logit1,train.df1[,-13],type='response')
+pred.valid1<-predict(opt.logit1,newdata=valid.df1[,-13],type='response')
+(conf.matrix1<-table(actual.train1, pred.train1>.5))
+(conf.matrix2<-table(actual.valid1, pred.valid1>.5))
+```
+
+### Accuracy
+```{r}
+(acc.train1<-sum(conf.matrix1[2,2],conf.matrix1[1,1])/sum(conf.matrix1))
+(acc.valid1<-sum(conf.matrix2[2,2],conf.matrix2[1,1])/sum(conf.matrix2))
+```
+
+### Precision
+```{r}
+(prec.train1<-conf.matrix1[2,2]/(conf.matrix1[2,2]+conf.matrix1[1,2]))
+(prec.valid1<-conf.matrix2[2,2]/(conf.matrix2[2,2]+conf.matrix2[1,2]))
+```
+
+### Recall
+```{r}
+(rec.train1<-conf.matrix1[2,2]/(conf.matrix1[2,2]+conf.matrix1[2,1]))
+(rec.valid1<-conf.matrix2[2,2]/(conf.matrix2[2,2]+conf.matrix2[2,1]))
+```
+### F-stat
+```{r}
+(stat.train1<-(2*prec.train1*rec.train1)/(prec.train1 + rec.train1))
+(stat.valid1<-(2*prec.valid1*rec.valid1)/(prec.valid1 + rec.valid1))
+```
+
+
+### AUC and ROC Curves
+```{r}
+(roc.train1<-roc.curve(actual.train1, pred.train1))
+(roc.valid1<-roc.curve(actual.valid1, pred.valid1))
+```
+
+Based on the analysis the model seems to preform pretty well due to the similarities between the training a validation data sets.
+
+
+### 80/20 partition logit model analysis.
+
+To begin the analysis I will create a confusion matrix that will compare the models predicted values to the actual values based on the training and validation data sets. 
+```{r}
+actual.train2<-train.df2$cnt
+actual.valid2<-valid.df2$cnt
+pred.train2<-predict(opt.logit2,train.df2[,-13],type='response')
+pred.valid2<-predict(opt.logit2,newdata=valid.df2[,-13],type='response')
+(conf.matrix3<-table(actual.train2, pred.train2>.5))
+(conf.matrix4<-table(actual.valid2, pred.valid2>.5))
+```
+
+### Accuracy
+```{r}
+(acc.train2<-sum(conf.matrix3[2,2],conf.matrix3[1,1])/sum(conf.matrix3))
+(acc.valid2<-sum(conf.matrix4[2,2],conf.matrix4[1,1])/sum(conf.matrix4))
+```
+
+### Precision
+```{r}
+(prec.train2<-conf.matrix3[2,2]/(conf.matrix3[2,2]+conf.matrix3[1,2]))
+(prec.valid2<-conf.matrix4[2,2]/(conf.matrix4[2,2]+conf.matrix4[1,2]))
+```
+
+### Recall
+```{r}
+(rec.train2<-conf.matrix3[2,2]/(conf.matrix3[2,2]+conf.matrix3[2,1]))
+(rec.valid2<-conf.matrix4[2,2]/(conf.matrix4[2,2]+conf.matrix4[2,1]))
+```
+### F-stat
+```{r}
+stat.train2<-(2*prec.train2*rec.train2)/(prec.train2 + rec.train2)
+stat.valid2<-(2*prec.valid2*rec.valid2)/(prec.valid2 + rec.valid2)
+```
+
+
+### AUC and ROC Curves
+```{r}
+(roc.train2<-roc.curve(actual.train2, pred.train2))
+(roc.valid2<-roc.curve(actual.valid2, pred.valid2))
+```
+
+Based on the analysis the model seems to preform pretty well due to the similarities between the training a validation data sets.
+
+### Model comparison
+
+First I will create a table to easily see all the analysis in one spot.
+
+```{r}
+table<-cbind(
+  c(acc.train1,prec.train1,rec.train1,stat.train1,roc.train1$auc), 
+  c(acc.train2,prec.train2,rec.train2,stat.train2,roc.train2$auc),
+  c(acc.valid1,prec.valid1,rec.valid1,stat.valid1,roc.valid1$auc),
+  c(acc.valid2,prec.valid2,rec.valid2,stat.valid2,roc.valid2$auc)
+  )
+colnames(table)<-c("Model1.Train","Model2.Train","Model1.Valid","Model2.Valid")
+rownames(table)<-c("Accuracy","Precision","Recall","F-Stat","AIC")
+table<-data.frame(table)
+table
+```
+*Accuracy:* Model 2 did better with both training and validation data
+*Precision:* Model 2 did better with both training and validation data
+*Recall:* Model 2 did better with both training and validation data
+*F-Stat* Model 2 did better with both training and validation data
+*AIC*  Model1 train was better but model2 validation was better
+
+### Conclusion
+
+I created a 60/40 split of data and build a glm model. I used the Stepwise in both directions to attempt to find the model with the best fit.
+The model build was: 
+cnt ~ season + yr + mnth + hr + holiday + weekday + weathersit + temp + atemp + hum + windspeed, family + "binomial", data =valid.df1
+
+I then made a confusion matrix to do analysis on the model performance and test involving accuracy, precision, recall, F-stat and AIC.
+Looking at the results I decided the model was good at predicting how the next days rentals will be. 
+
+Next, I created a 80/20 split of data and build a glm model. I used the Stepwise in both directions to attempt to find the model with the best fit.The model build was:
+cnt ~ season + yr + hr + holiday + weekday + weathersit + atemp + hum, family = "binomial", data = valid.df2
+
+I then made a confusion matrix to do analysis on the model performance and test involving accuracy, precision, recall, F-stat and AIC.
+Looking at the results I decided the model was good at predicting how the next days rentals will be
+
+It seems that Model2 is the stronger performer. This may be due to missing features because though some of the levels of the features like "mnth" only have a high significance level for 3 of the variables. Model 1 therefore could have suffered from overfitting and ultimately lead to model 2 being the stronger performer.
+
+
