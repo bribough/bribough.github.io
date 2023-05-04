@@ -1,0 +1,298 @@
+---
+title: "Untitled"
+author: "Brian Boughton"
+date: "2023-04-28"
+output: html_document
+---
+
+# Milestone 6 - Hierarchical Clustering
+
+## Goal
+
+### Requirements
+
+* Implement Hierarchical Clustering model
+
+* Display and summarize findings.
+
+This model is going to be done a bit differently than previous models. I will be making clusters based on the month instead of the count of bikes. I am also going to be using casual and registered instead of the cnt total.
+
+### Scenario
+
+The bike rental company wants to find which months to do a discount promotion
+
+## Data Wrangling
+
+The data set is going to have to be turned into a data set with 12 entries and 11 features. The 12 entries will be one for each month and the features will be either the percentage or average of that features for each month.
+
+### Reimportation
+
+The data set will be imported again and this time I will be removing the instant, dteday,cnt,yr,season, and weekday features. This is because each one of them have a direct relation with the date and would be meaningless. Heavy rain will be merged into rain due to it making up such a small part of the data. I will also have to normalize the **casual** and **registered** users  features for the clustering to properly be done. I will simply divide each value by the maximum value of the feature.
+
+```{r}
+pj<-read.csv("day.csv")
+pj<-subset(pj, select = -c(instant, dteday, cnt,yr, season,weekday))
+pj$weathersit<-ifelse(pj$weathersit == 4,3,pj$weathersit)
+pj$casual<-pj$casual/max(pj$casual)
+pj$registered<-pj$registered/max(pj$registered)
+head(pj)
+```
+### Data Percentages
+
+The following code will be find the percentage of holidays, workingdays, sunnydays, cloudydays, rainydays for each month
+
+```{r}
+#Percentage of days that are holidays for each month
+holiday<-c(
+sum(pj$holiday == 1 & pj$mnth == 1)/sum(pj$mnth ==1),
+sum(pj$holiday == 1 & pj$mnth == 2)/sum(pj$mnth ==2),
+sum(pj$holiday == 1 & pj$mnth == 3)/sum(pj$mnth ==3),
+sum(pj$holiday == 1 & pj$mnth == 4)/sum(pj$mnth ==4),
+sum(pj$holiday == 1 & pj$mnth == 5)/sum(pj$mnth ==5),
+sum(pj$holiday == 1 & pj$mnth == 6)/sum(pj$mnth ==6),
+sum(pj$holiday == 1 & pj$mnth == 7)/sum(pj$mnth ==7),
+sum(pj$holiday == 1 & pj$mnth == 8)/sum(pj$mnth ==8),
+sum(pj$holiday == 1 & pj$mnth == 9)/sum(pj$mnth ==9),
+sum(pj$holiday == 1 & pj$mnth == 10)/sum(pj$mnth ==10),
+sum(pj$holiday == 1 & pj$mnth == 11)/sum(pj$mnth ==11),
+sum(pj$holiday == 1 & pj$mnth == 12)/sum(pj$mnth ==12))
+#Percentage of days that are work days for each month
+workingday<-c(
+sum(pj$workingday == 1 & pj$mnth == 1)/sum(pj$mnth ==1),
+sum(pj$workingday == 1 & pj$mnth == 2)/sum(pj$mnth ==2),
+sum(pj$workingday == 1 & pj$mnth == 3)/sum(pj$mnth ==3),
+sum(pj$workingday == 1 & pj$mnth == 4)/sum(pj$mnth ==4),
+sum(pj$workingday == 1 & pj$mnth == 5)/sum(pj$mnth ==5),
+sum(pj$workingday == 1 & pj$mnth == 6)/sum(pj$mnth ==6),
+sum(pj$workingday == 1 & pj$mnth == 7)/sum(pj$mnth ==7),
+sum(pj$workingday == 1 & pj$mnth == 8)/sum(pj$mnth ==8),
+sum(pj$workingday == 1 & pj$mnth == 9)/sum(pj$mnth ==9),
+sum(pj$workingday == 1 & pj$mnth == 10)/sum(pj$mnth ==10),
+sum(pj$workingday == 1 & pj$mnth == 11)/sum(pj$mnth ==11),
+sum(pj$workingday == 1 & pj$mnth == 12)/sum(pj$mnth ==12))
+#percentage of days sunny each month
+sunny<-c(
+sum(pj$weathersit == 1 & pj$mnth == 1)/sum(pj$mnth ==1),
+sum(pj$weathersit == 1 & pj$mnth == 2)/sum(pj$mnth ==2),
+sum(pj$weathersit == 1 & pj$mnth == 3)/sum(pj$mnth ==3),
+sum(pj$weathersit == 1 & pj$mnth == 4)/sum(pj$mnth ==4),
+sum(pj$weathersit == 1 & pj$mnth == 5)/sum(pj$mnth ==5),
+sum(pj$weathersit == 1 & pj$mnth == 6)/sum(pj$mnth ==6),
+sum(pj$weathersit == 1 & pj$mnth == 7)/sum(pj$mnth ==7),
+sum(pj$weathersit == 1 & pj$mnth == 8)/sum(pj$mnth ==8),
+sum(pj$weathersit == 1 & pj$mnth == 9)/sum(pj$mnth ==9),
+sum(pj$weathersit == 1 & pj$mnth == 10)/sum(pj$mnth ==10),
+sum(pj$weathersit == 1 & pj$mnth == 11)/sum(pj$mnth ==11),
+sum(pj$weathersit == 1 & pj$mnth == 12)/sum(pj$mnth ==12))
+#percentage of days that are cloudy
+cloudy<-c(
+sum(pj$weathersit == 2 & pj$mnth == 1)/sum(pj$mnth ==1),
+sum(pj$weathersit == 2 & pj$mnth == 2)/sum(pj$mnth ==2),
+sum(pj$weathersit == 2 & pj$mnth == 3)/sum(pj$mnth ==3),
+sum(pj$weathersit == 2 & pj$mnth == 4)/sum(pj$mnth ==4),
+sum(pj$weathersit == 2 & pj$mnth == 5)/sum(pj$mnth ==5),
+sum(pj$weathersit == 2 & pj$mnth == 6)/sum(pj$mnth ==6),
+sum(pj$weathersit == 2 & pj$mnth == 7)/sum(pj$mnth ==7),
+sum(pj$weathersit == 2 & pj$mnth == 8)/sum(pj$mnth ==8),
+sum(pj$weathersit == 2 & pj$mnth == 9)/sum(pj$mnth ==9),
+sum(pj$weathersit == 2 & pj$mnth == 10)/sum(pj$mnth ==10),
+sum(pj$weathersit == 2 & pj$mnth == 11)/sum(pj$mnth ==11),
+sum(pj$weathersit == 2 & pj$mnth == 12)/sum(pj$mnth ==12) 
+)
+#percentage of days that are rainy
+rainy<-c(
+sum(pj$weathersit == 3 & pj$mnth == 1)/sum(pj$mnth ==1),
+sum(pj$weathersit == 3 & pj$mnth == 2)/sum(pj$mnth ==2),
+sum(pj$weathersit == 3 & pj$mnth == 3)/sum(pj$mnth ==3),
+sum(pj$weathersit == 3 & pj$mnth == 4)/sum(pj$mnth ==4),
+sum(pj$weathersit == 3 & pj$mnth == 5)/sum(pj$mnth ==5),
+sum(pj$weathersit == 3 & pj$mnth == 6)/sum(pj$mnth ==6),
+sum(pj$weathersit == 3 & pj$mnth == 7)/sum(pj$mnth ==7),
+sum(pj$weathersit == 3 & pj$mnth == 8)/sum(pj$mnth ==8),
+sum(pj$weathersit == 3 & pj$mnth == 9)/sum(pj$mnth ==9),
+sum(pj$weathersit == 3 & pj$mnth == 10)/sum(pj$mnth ==10),
+sum(pj$weathersit == 3 & pj$mnth == 11)/sum(pj$mnth ==11),
+sum(pj$weathersit == 3 & pj$mnth == 12)/sum(pj$mnth ==12))
+```
+
+The following code will find the average temp, atemp, hum, wind speed, casual, and registered values for each month.
+```{r}
+#Average temp for each month
+temp<-c(
+mean(pj[pj$mnth == 1, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 2, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 3, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 4, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 5, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 6, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 7, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 8, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 9, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 10, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 11, 'temp'], na.rm = TRUE),
+mean(pj[pj$mnth == 12, 'temp'], na.rm = TRUE))
+#Average atemp for each month
+atemp<-c(
+mean(pj[pj$mnth == 1, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 2, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 3, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 4, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 5, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 6, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 7, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 8, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 9, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 10, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 11, 'atemp'], na.rm = TRUE),
+mean(pj[pj$mnth == 12, 'atemp'], na.rm = TRUE))
+#Average humidity for each month
+hum<-c(
+mean(pj[pj$mnth == 1, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 2, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 3, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 4, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 5, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 6, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 7, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 8, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 9, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 10, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 11, 'hum'], na.rm = TRUE),
+mean(pj[pj$mnth == 12, 'hum'], na.rm = TRUE))
+#Average wind speed for each month
+windspeed<-c(
+mean(pj[pj$mnth == 1, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 2, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 3, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 4, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 5, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 6, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 7, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 8, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 9, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 10, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 11, 'windspeed'], na.rm = TRUE),
+mean(pj[pj$mnth == 12, 'windspeed'], na.rm = TRUE))
+#Average casual rider per month
+casual<-c(
+mean(pj[pj$mnth == 1, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 2, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 3, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 4, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 5, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 6, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 7, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 8, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 9, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 10, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 11, 'casual'], na.rm = TRUE),
+mean(pj[pj$mnth == 12, 'casual'], na.rm = TRUE))
+#Average Registered rider per month
+registered<-c(
+mean(pj[pj$mnth == 1, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 2, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 3, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 4, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 5, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 6, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 7, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 8, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 9, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 10, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 11, 'registered'], na.rm = TRUE),
+mean(pj[pj$mnth == 12, 'registered'], na.rm = TRUE))
+```
+
+### Creating Dataframe
+
+Now that all the needed information has been extracted from the raw dataset, I can merge it all together into on new dataset called **df**. The column names will be the names of the values I extracted and the row names will be the months of the year. 
+```{r}
+df<-as.data.frame(cbind(workingday,holiday,sunny,cloudy,rainy,temp,atemp,hum,windspeed,casual,registered))
+rownames(df)<-c('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')
+df
+```
+Now, we have a 12X11 table with each value in a range of 0-1. This will allow for the euclidean distance formulas to be done properly.
+
+## Building the model
+
+### Euclidean Distance Matrix
+
+Below is a matrix displaying the euclidean distances between each month. These numbers will be used when developing the Hierarchical clusters.
+
+```{r}
+(dist<-dist(df[1:11], method = "euclidean"))
+```
+
+### Developing Hierarachical Models
+
+We will compare the five different options to see if it divides our data into different clusters while using k=4.
+
+```{r}
+hc1 <- hclust(dist, method = "single")
+(memb1<-cutree(hc1, k=4))
+hc2 <- hclust(dist, method = "average")
+(memb2<-cutree(hc2, k=4))
+hc3 <- hclust(dist, method = "complete")
+(memb3<-cutree(hc3, k=4))
+hc4 <- hclust(dist, method = "median")
+(memb4<-cutree(hc4, k=4))
+hc5 <- hclust(dist, method = "centroid")
+(memb5<-cutree(hc5, k=4))
+```
+It appears that each method produced the same clusters except for the single linkage method.
+
+## Evaluation
+
+### Hierarachial plot
+
+Below are the plots for each of the methods
+
+```{r}
+#Single Linkage
+plot(hc1, hang = -1, ann = FALSE,)
+abline(h=.21,col='red')
+```
+```{r}
+#Average Linkage
+plot(hc2, hang = -1, ann = FALSE)
+abline(h=.245,col='red')
+```
+```{r}
+#Complete Linkage
+plot(hc3, hang = -1, ann = FALSE)
+abline(h=.255,col='red')
+```
+```{r}
+#Median Linkage
+plot(hc4, hang = -1, ann = FALSE)
+abline(h=.21,col='red')
+```
+```{r}
+#Centroid Linkage
+plot(hc5, hang = -1, ann = FALSE)
+abline(h=.21,col='red')
+```
+
+
+### Heatmap
+
+This is the heatmap for single linkage.
+
+```{r}
+df1<-df
+row.names(df1) <- paste(memb1, ": ", row.names(df1), sep = "")
+heatmap(as.matrix(df1), Colv = NA, hclustfun = hclust, col=rev(paste("grey",1:99,sep="")))
+```
+
+This is the heatmap for complete linkage
+```{r}
+df2<-df
+row.names(df2) <- paste(memb3, ": ", row.names(df2), sep = "")
+heatmap(as.matrix(df2), Colv = NA, hclustfun = hclust, col=rev(paste("gray",1:99,sep="")))
+```
+
+## Conclusion
+
+We can tell that 
+cluster 1 contains on average the lowest level of riders so doing a promotion during this time could bring in more business during that time.
+

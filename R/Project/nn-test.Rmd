@@ -1,0 +1,55 @@
+---
+title: "Untitled"
+author: "Brian Boughton"
+date: "2023-03-07"
+output: html_document
+---
+
+```{r}
+pacman::p_load(pacman,neuralnet)
+```
+
+```{r}
+df <- read.csv("hour.csv")
+head(df)
+df$cnt <- ifelse(df$cnt >= mean(df$cnt),1,0)
+head(df)
+sum(df$cnt)/length(df$cnt)
+```
+
+```{r}
+df$above <- df$cnt == 1
+df$below <- df$cnt == 0
+```
+
+```{r}
+df$season<- as.factor(df$season)
+df$yr<- as.factor(df$yr)
+df$mnth<- as.factor(df$mnth)
+df$hr<- as.factor(df$hr)
+df$holiday<- as.factor(df$holiday)
+df$weekday<- as.factor(df$weekday)
+df$workingday<- as.factor(df$workingday)
+df$weathersit<- as.factor(df$weathersit)
+head(df)
+```
+
+```{r}
+set.seed(13)
+#Partitioning data into 60% training and 40% validation data 
+train.index1 <- sample(c(1:dim(df)[1]), dim(df)[1]*0.6)  
+train.df1 <- df[train.index1, ]
+valid.df1 <- df[-train.index1, ]
+#Partitioning data into 80% training and 20% validation data 
+train.index2 <- sample(c(1:dim(df)[1]), dim(df)[1]*0.8)  
+train.df2 <- df[train.index2, ]
+valid.df2 <- df[-train.index2, ]
+colnames(df)
+```
+
+```{r}
+nn<-neuralnet(data = df,above + below ~ season + yr + mnth + holiday, hidden = 2, linear.output = F)
+plot(nn)
+```
+
+
