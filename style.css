@@ -55,6 +55,7 @@ header {
 }
 
 .footer div h3{
+    margin-top: 20px;
     font-weight: 200;
     margin-bottom: 30px;
     letter-spacing: 1px;
@@ -189,7 +190,8 @@ audio {
     grid-template-columns: 400px 590px;
     grid-template-rows: auto auto;
     padding-top: 5vh;
-    padding-left: 25%;
+    margin-left:auto;
+    margin-right: auto;
   }
   
   body {

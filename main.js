@@ -1,1 +1,1 @@
-alert("Welcome to my site")
+// alert("Welcome to my site")
